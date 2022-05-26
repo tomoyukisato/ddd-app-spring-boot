@@ -1,0 +1,65 @@
+services:
+  mysql:
+    build: ./mysql
+    container_name: mysql
+    env_file:
+      - ./mysql/db.env
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/log:/var/log/mysql
+    ports:
+      - 3306:3306
+  dbclient:
+    image: phpmyadmin/phpmyadmin
+    container_name: dbclient
+    environment:
+      - PMA_ARBITRARY=1 # 任意のサーバーへの接続を許可
+      - PMA_HOST=mysql # 接続先ホスト名　ここではdbサーバーのコンテナ名を指定
+      - PMA_USER=root # MySQLの設定と合わせておく
+      - PMA_PASSWORD=root # MySQLの設定と合わせておく
+    links:
+      - mysql
+    ports:
+      - 4200:80
+    volumes:
+      - ./dbclient/sessions:/sessions
+    depends_on:
+      - mysql #
+  # web:
+  #   container_name: web-nginx
+  #   image: nginx:latest
+  #   depends_on:
+  #     - app
+  #   links:
+  #     - app
+  #   ports:
+  #     - 8081:81
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d
+  #     - ./nginx/www/:/usr/share/nginx/www
+  app:
+    container_name: app
+    ports:
+      - 8080:8080 # 通常実行
+      - 5050:5050 # デバッグ用
+    build: ./app
+    working_dir: /app
+    volumes:
+      - ../ddd_prj:/app
+    depends_on:
+      # - nginx
+      - mysql
+  # java:
+  #   image: openjdk:17
+  #   container_name: java
+  #   env_file:
+  #     - ./mysql/db.env
+  #   tty: true
+  #   working_dir: /app
+  #   volumes:
+  #     - ../ddd_prj/:/app
+  #   ports:
+  #     - 8080:8080 # 通常実行
+  #     - 5050:5050 # デバッグ用
+  #   depends_on:
+  #     - mysql
